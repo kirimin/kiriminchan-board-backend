@@ -23,6 +23,12 @@ group 'site.kirimin-chan.board'
 version '0.0.1'
 mainClassName = "io.ktor.server.netty.EngineMain"
 
+shadowJar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
 sourceSets {
     main.kotlin.srcDirs = main.java.srcDirs = ['src']
     test.kotlin.srcDirs = test.java.srcDirs = ['test']
