@@ -1,1 +1,1 @@
-web:    java -jar build/libs/kirimichan-board-0.0.1-all.jar
+web: java -jar build/libs/kiriminchan-board-0.0.1-all.jar
