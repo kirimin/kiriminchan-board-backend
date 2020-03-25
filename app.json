@@ -1,0 +1,6 @@
+{
+  "name": "kiriminchan-board",
+  "description": "",
+  "image": "heroku/java",
+  "addons": [ "heroku-postgresql" ]
+}
