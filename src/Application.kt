@@ -20,9 +20,9 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
 import site.kirimin_chan.board.api.request.CreateThreadRequest
+import site.kirimin_chan.board.db.KiriminchanBoardDb
 import site.kirimin_chan.board.entities.*
 import java.time.Duration
-
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
@@ -44,66 +44,28 @@ fun Application.module(testing: Boolean = false) {
         allowNonSimpleContentTypes = true
         maxAgeInSeconds = Duration.ofDays(1).seconds
     }
-    Database.connect(
-        "jdbc:postgresql://localhost:5432/kiriminchan_board",
-        driver = "org.postgresql.Driver",
-        user = "postgres",
-        password = "postgres"
-    )
 
-    transaction {
-        addLogger(StdOutSqlLogger)
-
-        SchemaUtils.drop(Users)
-        SchemaUtils.drop(Threads)
-        SchemaUtils.drop(Comments)
-        SchemaUtils.drop(Reactions)
-        SchemaUtils.drop(Stamps)
-        SchemaUtils.drop(CommentReactions)
-
-        SchemaUtils.create(Users)
-        SchemaUtils.create(Threads)
-        SchemaUtils.create(Comments)
-        SchemaUtils.create(Reactions)
-        SchemaUtils.create(Stamps)
-        SchemaUtils.create(CommentReactions)
-
-        // insert new city. SQL: INSERT INTO Cities (name) VALUES ('St. Petersburg')
-//        val stPeteId = Cities.insert {
-//            it[name] = "St. Petersburg"
-//        } get Cities.id
-    }
+    KiriminchanBoardDb.connect()
+    KiriminchanBoardDb.initTables()
 
     routing {
         get("/") {
             call.respondText("Hello World!")
         }
         get("/thread/list") {
-            val allThreads = transaction {
-                Threads.selectAll().filter { it[Threads.isDeleted] == '0' }.map {
-                    site.kirimin_chan.board.model.Thread(
-                        threadId = it[Threads.threadId],
-                        title = it[Threads.title],
-                        createdUserId = it[Threads.createdUserId],
-                        createdAt = DEF_FMT.print(it[Threads.createdAt]),
-                        updatedAt = DEF_FMT.print(it[Threads.updatedAt])
-                    )
-                }
-            }
-            call.respond(allThreads)
+            call.respond(Threads.getAllThread())
         }
         post("/thread/create") {
             val request = call.receive<CreateThreadRequest>()
             println("request:$request")
             transaction {
-                val result = Threads.insert {
+                val newThreadId = Threads.insert {
                     it[createdUserId] = request.createdUserId
                     it[title] = request.text
                     it[Comments.isDeleted] = '0'
                     it[createdAt] = DateTime()
                     it[updatedAt] = DateTime()
-                }
-                val newThreadId = result.resultedValues?.get(0)?.get(Threads.threadId) ?: 0
+                } get Threads.threadId
                 Comments.insert {
                     it[threadId] = newThreadId
                     it[createdUserId] = request.createdUserId
@@ -114,6 +76,15 @@ fun Application.module(testing: Boolean = false) {
                 }
             }
             call.respond(mapOf("status" to "OK"))
+        }
+        get("/comment/list") {
+            val params = call.request.queryParameters
+            val threadId = params["threadid"]?.toIntOrNull()
+            if (threadId == null) {
+                call.respond(mapOf("status" to "IllegalArguments. param threadid must not empty."))
+                return@get
+            }
+            call.respond(Comments.getByThreadId(threadId))
         }
     }
 }
