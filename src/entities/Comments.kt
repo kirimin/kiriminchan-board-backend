@@ -8,7 +8,9 @@ import org.joda.time.DateTime
 object Comments: Table() {
     val commentId: Column<Int> = integer("commentid").autoIncrement()
     val threadId: Column<Int> = integer("threadid")
-    val stampId:  Column<Int> = integer("stampid")
+    val createdUserId: Column<Int> = integer("createdUserid")
+    val text: Column<String> = text("title")
+    val stampId:  Column<Int?> = integer("stampid").nullable()
     val isDeleted: Column<Char> = char("is_deleted")
     val createdAt: Column<DateTime> = datetime("created_at")
     val updatedAt: Column<DateTime> = datetime("updated_at")
