@@ -31,10 +31,11 @@ object Comments : Table() {
         commentId = row[commentId],
         threadId = row[threadId],
         createdUserId = row[createdUserId],
-        isDeleted = row[isDeleted],
+        createdUserName = Users.getUserById(row[createdUserId]).screenName,
         text = row[text],
         stampId = row[stampId],
         createdAt = DEF_FMT.print(row[createdAt]),
-        updatedAt = DEF_FMT.print(row[updatedAt])
+        updatedAt = DEF_FMT.print(row[updatedAt]),
+        isDeleted = row[isDeleted]
     )
 }

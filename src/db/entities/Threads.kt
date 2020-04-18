@@ -1,10 +1,7 @@
 package site.kirimin_chan.board.entities
 
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.jodatime.datetime
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import site.kirimin_chan.board.DEF_FMT
@@ -20,16 +17,24 @@ object Threads: Table() {
     override val primaryKey = PrimaryKey(threadId)
 
     fun getAllThread() = transaction {
-        Threads.select { isDeleted eq '0' }.map {
+        Threads.select { isDeleted eq '0' }.orderBy(threadId to SortOrder.DESC).map {
             toModel(it)
         }
+    }
+
+    fun getByThreadId(id: Int) = transaction {
+        Threads.select { (isDeleted eq '0') and (threadId eq id) }.map {
+            toModel(it)
+        }.first()
     }
 
     private fun toModel(row: ResultRow) = Thread(
         threadId = row[threadId],
         title = row[title],
         createdUserId = row[createdUserId],
+        createdUserName = Users.getUserById(row[createdUserId]).screenName,
         createdAt = DEF_FMT.print(row[createdAt]),
-        updatedAt = DEF_FMT.print(row[updatedAt])
+        updatedAt = DEF_FMT.print(row[updatedAt]),
+        comments = emptyList()
     )
 }

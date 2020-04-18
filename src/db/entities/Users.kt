@@ -3,7 +3,10 @@ package site.kirimin_chan.board.entities
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.jodatime.datetime
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
+import site.kirimin_chan.board.DEF_FMT
 
 object Users : Table() {
     val userId: Column<Int> = integer("userid").autoIncrement()
@@ -14,4 +17,18 @@ object Users : Table() {
     val createdAt: Column<DateTime> = datetime("created_at")
     val updatedAt: Column<DateTime> = datetime("updated_at")
     override val primaryKey = PrimaryKey(userId)
+
+    fun getUserById(id: Int) = transaction {
+        Users.select { userId eq id }.map {
+            User(
+                userId = it[userId],
+                screenName = it[screenName],
+                iconUrl = it[iconUrl],
+                isDeleted = it[isDeleted],
+                twitterId = it[twitterId],
+                createdAt = DEF_FMT.print(it[createdAt]),
+                updatedAt = DEF_FMT.print(it[updatedAt])
+            )
+        }.first()
+    }
 }

@@ -5,5 +5,7 @@ data class Thread(
     val title: String,
     val createdAt: String,
     val updatedAt: String,
-    val createdUserId: Int
+    val createdUserId: Int,
+    val createdUserName: String,
+    var comments : List<Comment>
 )

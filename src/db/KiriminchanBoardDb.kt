@@ -1,9 +1,6 @@
 package site.kirimin_chan.board.db
 
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.StdOutSqlLogger
-import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import site.kirimin_chan.board.entities.*
 
@@ -35,6 +32,16 @@ object KiriminchanBoardDb {
             SchemaUtils.create(Reactions)
             SchemaUtils.create(Stamps)
             SchemaUtils.create(CommentReactions)
+
+//            Users.insert {
+//                it[userId] = 1
+//                it[screenName] = "きりみんちゃん"
+//                it[iconUrl] = ""
+//                it[isDeleted] = '0'
+//                it[twitterId] = "kirimin_chan"
+//                it[createdAt] = DateTime()
+//                it[updatedAt] = DateTime()
+//            }
         }
     }
 }
