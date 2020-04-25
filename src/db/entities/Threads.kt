@@ -1,4 +1,4 @@
-package site.kirimin_chan.board.entities
+package db.entities
 
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.jodatime.datetime

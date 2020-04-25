@@ -1,5 +1,6 @@
 package site.kirimin_chan.board.entities
 
+import db.entities.Users
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table

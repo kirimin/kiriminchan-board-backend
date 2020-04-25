@@ -1,6 +1,6 @@
 package site.kirimin_chan.board.api.request
 
-data class CreateCommentRequest(
+data class CreateNewCommentRequest(
     val threadId: Int,
     val createdUserId: Int,
     val text: String

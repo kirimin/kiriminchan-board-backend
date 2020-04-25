@@ -1,5 +1,7 @@
 package site.kirimin_chan.board
 
+import db.entities.Threads
+import db.entities.Users
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -12,7 +14,6 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
-import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
@@ -21,11 +22,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
-import site.kirimin_chan.board.api.request.CreateCommentRequest
-import site.kirimin_chan.board.api.request.CreateThreadRequest
+import site.kirimin_chan.board.api.request.*
 import site.kirimin_chan.board.db.KiriminchanBoardDb
 import site.kirimin_chan.board.entities.*
-import site.kirimin_chan.board.model.Comment
 import java.time.Duration
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
@@ -58,24 +57,13 @@ fun Application.module(testing: Boolean = false) {
     KiriminchanBoardDb.initTables()
 
     routing {
-        get("/") {
-            call.respondText("Hello World!")
-        }
-        get("/thread/list") {
-            call.respond(Threads.getAllThread())
-        }
-        get("/comment/list") {
-            val params = call.request.queryParameters
-            val threadId =
-                params["threadid"]?.toIntOrNull() ?: throw IllegalArgumentException("param threadid must not empty.")
-            call.respond(Comments.getByThreadId(threadId))
-        }
-
         get("/api/getThreadsSumally") {
             val response = transaction {
                 Threads.getAllThread().map {
                     it.comments = Comments.getByThreadId(it.threadId)
                     it
+                }.filter {
+                    it.comments.isNotEmpty()
                 }
             }
             call.respond(response)
@@ -95,8 +83,7 @@ fun Application.module(testing: Boolean = false) {
         }
 
         post("/api/createNewThread") {
-            val request = call.receive<CreateThreadRequest>()
-            println("request:$request")
+            val request = call.receive<CreateNewThreadRequest>()
             transaction {
                 val newThreadId = Threads.insert {
                     it[createdUserId] = request.createdUserId
@@ -117,17 +104,65 @@ fun Application.module(testing: Boolean = false) {
             call.respond(mapOf("status" to "OK"))
         }
 
-        post("/api/createNewCommnet") {
-            val request = call.receive<CreateCommentRequest>()
-            Comments.insert {
-                it[threadId] = request.threadId
-                it[createdUserId] = request.createdUserId
-                it[text] = request.text
-                it[isDeleted] = '0'
-                it[Threads.createdAt] = DateTime()
-                it[Threads.updatedAt] = DateTime()
+        post("/api/deleteThread") {
+            val request = call.receive<DeleteThreadRequest>()
+            transaction {
+                Threads.deleteWhere { Threads.threadId eq request.threadId }
+                Comments.deleteWhere { Comments.threadId eq request.threadId }
             }
             call.respond(mapOf("status" to "OK"))
+        }
+
+        post("/api/createNewComment") {
+            val request = call.receive<CreateNewCommentRequest>()
+            transaction {
+                Comments.insert {
+                    it[threadId] = request.threadId
+                    it[createdUserId] = request.createdUserId
+                    it[text] = request.text
+                    it[isDeleted] = '0'
+                    it[Threads.createdAt] = DateTime()
+                    it[Threads.updatedAt] = DateTime()
+                }
+            }
+            call.respond(mapOf("status" to "OK"))
+        }
+
+        post("/api/deleteComment") {
+            val request = call.receive<DeleteCommentRequest>()
+            transaction {
+                Comments.deleteWhere { Comments.commentId eq request.commentId }
+            }
+            call.respond(mapOf("status" to "OK"))
+        }
+
+        post("/api/createNewUser") {
+            val request = call.receive<CreateNewUserRequest>()
+            transaction {
+                Users.insert {
+                    it[screenName] = request.name
+                    it[firebaseUid] = request.firebaseUid
+                    it[iconUrl] = ""
+                    it[isDeleted] = '0'
+                    it[isAdmin] = '0'
+                    it[twitterId] = ""
+                    it[createdAt] = DateTime()
+                    it[updatedAt] = DateTime()
+                }
+            }
+            call.respond(mapOf("status" to "OK"))
+        }
+
+        get("/api/getUser/{uid}") {
+            val params = call.parameters
+            val uid =
+                params["uid"] ?: throw IllegalArgumentException("param uid must not empty.")
+            val response = transaction {
+                Users.select { Users.firebaseUid eq uid }.map {
+                    Users.getUserById(it[Users.userId])
+                }.first()
+            }
+            call.respond(response)
         }
     }
 }
