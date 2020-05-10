@@ -5,9 +5,9 @@ data class Comment(
     val threadId: Int,
     val createdUserId: Int,
     val createdUserName: String,
+    val commentNumber: Int,
     val text: String,
     val stampId: Int?,
-    val isDeleted: Char,
     val createdAt: String,
     val updatedAt: String
 )

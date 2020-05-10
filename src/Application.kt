@@ -66,6 +66,7 @@ fun Application.module(testing: Boolean = false) {
                     it.comments.isNotEmpty()
                 }
             }
+            call.response.status(HttpStatusCode.OK)
             call.respond(response)
         }
 
@@ -79,6 +80,7 @@ fun Application.module(testing: Boolean = false) {
                     it
                 }
             }
+            call.response.status(HttpStatusCode.OK)
             call.respond(response)
         }
 
@@ -88,19 +90,19 @@ fun Application.module(testing: Boolean = false) {
                 val newThreadId = Threads.insert {
                     it[createdUserId] = request.createdUserId
                     it[title] = request.title
-                    it[Comments.isDeleted] = '0'
                     it[createdAt] = DateTime()
                     it[updatedAt] = DateTime()
                 } get Threads.threadId
                 Comments.insert {
                     it[threadId] = newThreadId
                     it[createdUserId] = request.createdUserId
+                    it[commentNumber] = 1
                     it[text] = request.text
-                    it[isDeleted] = '0'
                     it[Threads.createdAt] = DateTime()
                     it[Threads.updatedAt] = DateTime()
                 }
             }
+            call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
         }
 
@@ -110,6 +112,7 @@ fun Application.module(testing: Boolean = false) {
                 Threads.deleteWhere { Threads.threadId eq request.threadId }
                 Comments.deleteWhere { Comments.threadId eq request.threadId }
             }
+            call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
         }
 
@@ -119,12 +122,13 @@ fun Application.module(testing: Boolean = false) {
                 Comments.insert {
                     it[threadId] = request.threadId
                     it[createdUserId] = request.createdUserId
+                    it[commentNumber] = getLastCommentNumber(request.threadId).commentNumber + 1
                     it[text] = request.text
-                    it[isDeleted] = '0'
                     it[Threads.createdAt] = DateTime()
                     it[Threads.updatedAt] = DateTime()
                 }
             }
+            call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
         }
 
@@ -133,7 +137,21 @@ fun Application.module(testing: Boolean = false) {
             transaction {
                 Comments.deleteWhere { Comments.commentId eq request.commentId }
             }
+            call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
+        }
+
+        get("/api/getUser/{uid}") {
+            val params = call.parameters
+            val uid =
+                params["uid"] ?: throw IllegalArgumentException("param uid must not empty.")
+            val response = transaction {
+                Users.select { Users.firebaseUid eq uid }.map {
+                    Users.getUserById(it[Users.userId])
+                }.first()
+            }
+            call.response.status(HttpStatusCode.OK)
+            call.respond(response)
         }
 
         post("/api/createNewUser") {
@@ -150,19 +168,19 @@ fun Application.module(testing: Boolean = false) {
                     it[updatedAt] = DateTime()
                 }
             }
+            call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
         }
 
-        get("/api/getUser/{uid}") {
-            val params = call.parameters
-            val uid =
-                params["uid"] ?: throw IllegalArgumentException("param uid must not empty.")
-            val response = transaction {
-                Users.select { Users.firebaseUid eq uid }.map {
-                    Users.getUserById(it[Users.userId])
-                }.first()
+        post("/api/deleteUser") {
+            val request = call.receive<DeleteUserRequest>()
+            transaction {
+                Users.update(where = { Users.userId eq request.userId }, body = {
+                    it[isDeleted] = '1'
+                })
             }
-            call.respond(response)
+            call.response.status(HttpStatusCode.OK)
+            call.respond(mapOf("status" to "OK"))
         }
     }
 }

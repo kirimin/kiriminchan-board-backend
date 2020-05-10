@@ -51,6 +51,7 @@ object KiriminchanBoardDb {
             it[iconUrl] = ""
             it[isDeleted] = '0'
             it[twitterId] = "kirimin_chan"
+            it[isAdmin] = '1'
             it[firebaseUid] = ""
             it[createdAt] = DateTime()
             it[updatedAt] = DateTime()

@@ -11,19 +11,18 @@ object Threads: Table() {
     val threadId: Column<Int> = integer("threadid").autoIncrement()
     val createdUserId: Column<Int> = integer("created_userid")
     val title: Column<String> = text("title")
-    val isDeleted: Column<Char> = char("is_deleted")
     val createdAt: Column<DateTime> = datetime("created_at")
     val updatedAt: Column<DateTime> = datetime("updated_at")
     override val primaryKey = PrimaryKey(threadId)
 
     fun getAllThread() = transaction {
-        Threads.select { isDeleted eq '0' }.orderBy(threadId to SortOrder.DESC).map {
+        Threads.selectAll().orderBy(threadId to SortOrder.DESC).map {
             toModel(it)
         }
     }
 
     fun getByThreadId(id: Int) = transaction {
-        Threads.select { (isDeleted eq '0') and (threadId eq id) }.map {
+        Threads.select { (threadId eq id) }.map {
             toModel(it)
         }.first()
     }
