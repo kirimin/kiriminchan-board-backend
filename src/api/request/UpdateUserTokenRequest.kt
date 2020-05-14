@@ -1,6 +1,6 @@
 package site.kirimin_chan.board.api.request
 
-data class DeleteUserRequest(
-    val userId: Int,
+data class UpdateUserTokenRequest(
+    val uid: String,
     val token: String
 )

@@ -1,4 +1,4 @@
-package site.kirimin_chan.board.entities
+package model
 
 data class User(
     val userId: Int,
@@ -8,5 +8,6 @@ data class User(
     val isAdmin: Char,
     val twitterId: String,
     val createdAt: String,
-    val updatedAt: String
+    val updatedAt: String,
+    val token: String
 )

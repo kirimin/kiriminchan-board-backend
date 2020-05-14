@@ -23,6 +23,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
 import site.kirimin_chan.board.api.request.*
+import site.kirimin_chan.board.auth.FirebaseAuth
 import site.kirimin_chan.board.db.KiriminchanBoardDb
 import site.kirimin_chan.board.entities.*
 import java.time.Duration
@@ -86,6 +87,10 @@ fun Application.module(testing: Boolean = false) {
 
         post("/api/createNewThread") {
             val request = call.receive<CreateNewThreadRequest>()
+            if (!FirebaseAuth.checkToken(request.createdUserId, request.token)) {
+                call.response.status(HttpStatusCode.Unauthorized)
+                return@post
+            }
             transaction {
                 val newThreadId = Threads.insert {
                     it[createdUserId] = request.createdUserId
@@ -108,6 +113,10 @@ fun Application.module(testing: Boolean = false) {
 
         post("/api/deleteThread") {
             val request = call.receive<DeleteThreadRequest>()
+            if (!FirebaseAuth.checkToken(request.userId, request.token)) {
+                call.response.status(HttpStatusCode.Unauthorized)
+                return@post
+            }
             transaction {
                 Threads.deleteWhere { Threads.threadId eq request.threadId }
                 Comments.deleteWhere { Comments.threadId eq request.threadId }
@@ -118,6 +127,10 @@ fun Application.module(testing: Boolean = false) {
 
         post("/api/createNewComment") {
             val request = call.receive<CreateNewCommentRequest>()
+            if (!FirebaseAuth.checkToken(request.createdUserId, request.token)) {
+                call.response.status(HttpStatusCode.Unauthorized)
+                return@post
+            }
             transaction {
                 Comments.insert {
                     it[threadId] = request.threadId
@@ -134,6 +147,10 @@ fun Application.module(testing: Boolean = false) {
 
         post("/api/deleteComment") {
             val request = call.receive<DeleteCommentRequest>()
+            if (!FirebaseAuth.checkToken(request.userId, request.token)) {
+                call.response.status(HttpStatusCode.Unauthorized)
+                return@post
+            }
             transaction {
                 Comments.deleteWhere { Comments.commentId eq request.commentId }
             }
@@ -166,6 +183,23 @@ fun Application.module(testing: Boolean = false) {
                     it[twitterId] = ""
                     it[createdAt] = DateTime()
                     it[updatedAt] = DateTime()
+                    it[token] = request.token
+                }
+            }
+            call.response.status(HttpStatusCode.OK)
+            call.respond(mapOf("status" to "OK"))
+        }
+
+        post("/api/updateUserToken") {
+            val request = call.receive<UpdateUserTokenRequest>()
+            val uId = FirebaseAuth.getUidByToken(idToken = request.token)
+            if (uId != request.uid) {
+                call.response.status(HttpStatusCode.BadRequest)
+                return@post
+            }
+            transaction {
+                Users.update(where = { Users.firebaseUid eq request.uid }) {
+                    it[token] = request.token
                 }
             }
             call.response.status(HttpStatusCode.OK)
@@ -174,6 +208,10 @@ fun Application.module(testing: Boolean = false) {
 
         post("/api/deleteUser") {
             val request = call.receive<DeleteUserRequest>()
+            if (!FirebaseAuth.checkToken(request.userId, request.token)) {
+                call.response.status(HttpStatusCode.Unauthorized)
+                return@post
+            }
             transaction {
                 Users.update(where = { Users.userId eq request.userId }, body = {
                     it[isDeleted] = '1'

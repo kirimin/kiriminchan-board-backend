@@ -55,6 +55,7 @@ object KiriminchanBoardDb {
             it[firebaseUid] = ""
             it[createdAt] = DateTime()
             it[updatedAt] = DateTime()
+            it[token] = ""
         }
     }
 }
