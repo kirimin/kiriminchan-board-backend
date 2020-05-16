@@ -17,6 +17,7 @@ import io.ktor.response.respond
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
+import io.ktor.util.KtorExperimentalAPI
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
@@ -45,9 +46,6 @@ fun Application.module(testing: Boolean = false) {
         method(HttpMethod.Options)
         header(HttpHeaders.XForwardedProto)
         anyHost()
-        // host("my-host:80")
-        // host("my-host", subDomains = listOf("www"))
-        // host("my-host", schemes = listOf("http", "https"))
         allowCredentials = true
         allowNonSimpleContentTypes = true
         maxAgeInSeconds = Duration.ofDays(1).seconds
@@ -55,6 +53,7 @@ fun Application.module(testing: Boolean = false) {
 
     KiriminchanBoardDb.connect()
     KiriminchanBoardDb.initTables()
+    FirebaseAuth.initFirebase(this)
 
     routing {
         get("/api/getThreadsSumally") {
@@ -222,4 +221,11 @@ fun Application.module(testing: Boolean = false) {
     }
 }
 
-var DEF_FMT: DateTimeFormatter = DateTimeFormat.mediumDateTime()
+val DEF_FMT: DateTimeFormatter = DateTimeFormat.mediumDateTime()
+
+@KtorExperimentalAPI
+val Application.envKind get() = environment.config.property("ktor.environment").getString()
+@KtorExperimentalAPI
+val Application.isDev get() = envKind == "dev"
+@KtorExperimentalAPI
+val Application.isProd get() = envKind == "prod"
