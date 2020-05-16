@@ -10,12 +10,7 @@ import site.kirimin_chan.board.entities.*
 object KiriminchanBoardDb {
 
     fun connect() {
-        Database.connect(
-            "jdbc:postgresql://localhost:5432/kiriminchan_board",
-            driver = "org.postgresql.Driver",
-            user = "postgres",
-            password = "postgres"
-        )
+        Database.connect(System.getenv("JDBC_DATABASE_URL"), driver = "org.postgresql.Driver")
     }
 
     fun initTables() {
@@ -31,7 +26,7 @@ object KiriminchanBoardDb {
             SchemaUtils.create(Stamps)
             SchemaUtils.create(CommentReactions)
 
-//            createDebugUser()
+            createAdminUserIfNeeded()
         }
     }
 
@@ -44,18 +39,20 @@ object KiriminchanBoardDb {
         SchemaUtils.drop(CommentReactions)
     }
 
-    private fun createDebugUser() {
-        Users.insert {
-            it[userId] = Integer.MAX_VALUE
-            it[screenName] = "きりみんちゃん"
-            it[iconUrl] = ""
-            it[isDeleted] = '0'
-            it[twitterId] = "kirimin_chan"
-            it[isAdmin] = '1'
-            it[firebaseUid] = ""
-            it[createdAt] = DateTime()
-            it[updatedAt] = DateTime()
-            it[token] = ""
+    private fun createAdminUserIfNeeded() {
+        if (Users.select { Users.isAdmin eq '1' }.empty()) {
+            Users.insert {
+                it[userId] = Integer.MAX_VALUE
+                it[screenName] = "きりみんちゃん@admin"
+                it[iconUrl] = ""
+                it[isDeleted] = '0'
+                it[twitterId] = "kirimin_chan"
+                it[isAdmin] = '1'
+                it[firebaseUid] = ""
+                it[createdAt] = DateTime()
+                it[updatedAt] = DateTime()
+                it[token] = ""
+            }
         }
     }
 }
