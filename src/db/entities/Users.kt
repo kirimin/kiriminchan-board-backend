@@ -8,6 +8,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import site.kirimin_chan.board.DEF_FMT
 import model.User
+import java.lang.NullPointerException
 
 object Users : Table() {
     val userId: Column<Int> = integer("userid").autoIncrement()
@@ -22,7 +23,7 @@ object Users : Table() {
     override val primaryKey = PrimaryKey(userId)
 
     fun getUserById(id: Int) = transaction {
-        Users.select { userId eq id }.map {
+        return@transaction Users.select { userId eq id }.map {
             User(
                 userId = it[userId],
                 screenName = it[screenName],
@@ -34,6 +35,6 @@ object Users : Table() {
                 createdAt = DEF_FMT.print(it[createdAt]),
                 updatedAt = DEF_FMT.print(it[updatedAt])
             )
-        }.first()
+        }.firstOrNull() ?: throw NullPointerException("UserNotFound userId:$id")
     }
 }

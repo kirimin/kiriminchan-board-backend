@@ -158,13 +158,17 @@ fun Application.module(testing: Boolean = false) {
 
         get("/api/getUser/{uid}") {
             val params = call.parameters
-            val uid =
-                params["uid"] ?: throw IllegalArgumentException("param uid must not empty.")
+            val uid = params["uid"] ?: let {
+                IllegalArgumentException("param uid must not empty.").printStackTrace()
+                call.response.status(HttpStatusCode.BadRequest)
+                return@get
+            }
             val response = transaction {
                 Users.select { Users.firebaseUid eq uid }.map {
                     Users.getUserById(it[Users.userId])
                 }.first()
             }
+
             call.response.status(HttpStatusCode.OK)
             call.respond(response)
         }
@@ -207,8 +211,13 @@ fun Application.module(testing: Boolean = false) {
 val DEF_FMT: DateTimeFormatter = DateTimeFormat.mediumDateTime()
 
 @KtorExperimentalAPI
-val Application.envKind get() = environment.config.property("ktor.environment").getString()
+val Application.envKind
+    get() = environment.config.property("ktor.environment").getString()
+
 @KtorExperimentalAPI
-val Application.isDev get() = envKind == "dev"
+val Application.isDev
+    get() = envKind == "dev"
+
 @KtorExperimentalAPI
-val Application.isProd get() = envKind == "prod"
+val Application.isProd
+    get() = envKind == "prod"
