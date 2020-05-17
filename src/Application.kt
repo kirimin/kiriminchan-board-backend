@@ -51,7 +51,7 @@ fun Application.module(testing: Boolean = false) {
         maxAgeInSeconds = Duration.ofDays(1).seconds
     }
 
-    KiriminchanBoardDb.connect()
+    KiriminchanBoardDb.connect(this)
     KiriminchanBoardDb.initTables()
     FirebaseAuth.initFirebase(this)
 
@@ -174,30 +174,13 @@ fun Application.module(testing: Boolean = false) {
             transaction {
                 Users.insert {
                     it[screenName] = request.name
-                    it[firebaseUid] = request.firebaseUid
                     it[iconUrl] = ""
                     it[isDeleted] = '0'
                     it[isAdmin] = '0'
                     it[twitterId] = ""
+                    it[firebaseUid] = request.firebaseUid
                     it[createdAt] = DateTime()
                     it[updatedAt] = DateTime()
-                    it[token] = request.token
-                }
-            }
-            call.response.status(HttpStatusCode.OK)
-            call.respond(mapOf("status" to "OK"))
-        }
-
-        post("/api/updateUserToken") {
-            val request = call.receive<UpdateUserTokenRequest>()
-            val uId = FirebaseAuth.getUidByToken(idToken = request.token)
-            if (uId != request.uid) {
-                call.response.status(HttpStatusCode.BadRequest)
-                return@post
-            }
-            transaction {
-                Users.update(where = { Users.firebaseUid eq request.uid }) {
-                    it[token] = request.token
                 }
             }
             call.response.status(HttpStatusCode.OK)

@@ -19,7 +19,6 @@ object Users : Table() {
     val firebaseUid: Column<String> = varchar("firebase_uid", 80)
     val createdAt: Column<DateTime> = datetime("created_at")
     val updatedAt: Column<DateTime> = datetime("updated_at")
-    val token: Column<String> = text("token")
     override val primaryKey = PrimaryKey(userId)
 
     fun getUserById(id: Int) = transaction {
@@ -31,9 +30,9 @@ object Users : Table() {
                 isDeleted = it[isDeleted],
                 isAdmin = it[isAdmin],
                 twitterId = it[twitterId],
+                uid = it[firebaseUid],
                 createdAt = DEF_FMT.print(it[createdAt]),
-                updatedAt = DEF_FMT.print(it[updatedAt]),
-                token = it[token]
+                updatedAt = DEF_FMT.print(it[updatedAt])
             )
         }.first()
     }

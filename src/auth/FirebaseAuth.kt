@@ -38,16 +38,10 @@ object FirebaseAuth {
     }
 
     fun getUidByToken(idToken: String): String {
-        val decodedToken = if (token.containsKey(idToken)) {
-            token[idToken]!!
-        } else {
-            val decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken)
-            token[idToken] = decodedToken
-            decodedToken
-        }
+        val decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken)
         return decodedToken.uid
     }
 
     fun checkToken(userId: Int, requestToken: String) =
-        Users.getUserById(userId).token == requestToken
+        Users.getUserById(userId).uid == getUidByToken(requestToken)
 }

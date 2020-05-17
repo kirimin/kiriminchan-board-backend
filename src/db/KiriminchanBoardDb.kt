@@ -2,15 +2,32 @@ package site.kirimin_chan.board.db
 
 import db.entities.Threads
 import db.entities.Users
+import io.ktor.application.Application
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import site.kirimin_chan.board.entities.*
+import site.kirimin_chan.board.isDev
+import site.kirimin_chan.board.isProd
+import java.lang.IllegalStateException
 
 object KiriminchanBoardDb {
 
-    fun connect() {
-        Database.connect(System.getenv("JDBC_DATABASE_URL"), driver = "org.postgresql.Driver")
+    fun connect(application: Application) {
+        when {
+            application.isDev -> {
+                Database.connect(
+                    "jdbc:postgresql://localhost:5432/kiriminchan_board",
+                    driver = "org.postgresql.Driver",
+                    user = "postgres",
+                    password = "postgres"
+                )
+            }
+            application.isProd -> {
+                Database.connect(System.getenv("JDBC_DATABASE_URL"), driver = "org.postgresql.Driver")
+            }
+            else -> throw IllegalStateException()
+        }
     }
 
     fun initTables() {
@@ -51,7 +68,6 @@ object KiriminchanBoardDb {
                 it[firebaseUid] = ""
                 it[createdAt] = DateTime()
                 it[updatedAt] = DateTime()
-                it[token] = ""
             }
         }
     }
