@@ -34,7 +34,7 @@ object KiriminchanBoardDb {
         transaction {
             addLogger(StdOutSqlLogger)
 
-//            dropTables()
+            dropTables()
 
             SchemaUtils.create(Users)
             SchemaUtils.create(Threads)
