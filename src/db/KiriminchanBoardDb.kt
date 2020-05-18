@@ -33,9 +33,7 @@ object KiriminchanBoardDb {
     fun initTables() {
         transaction {
             addLogger(StdOutSqlLogger)
-
-            dropTables()
-
+            
             SchemaUtils.create(Users)
             SchemaUtils.create(Threads)
             SchemaUtils.create(Comments)
