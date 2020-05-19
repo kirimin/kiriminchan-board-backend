@@ -5,9 +5,8 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.jodatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import site.kirimin_chan.board.DEF_FMT
 import site.kirimin_chan.board.model.Comment
-import kotlin.and
+import toFormattedDateTime
 
 object Comments : Table() {
     val commentId: Column<Int> = integer("commentid").autoIncrement()
@@ -38,7 +37,7 @@ object Comments : Table() {
         commentNumber = row[commentNumber],
         text = row[text],
         stampId = row[stampId],
-        createdAt = DEF_FMT.print(row[createdAt]),
-        updatedAt = DEF_FMT.print(row[updatedAt])
+        createdAt = toFormattedDateTime((row[createdAt])),
+        updatedAt = toFormattedDateTime((row[updatedAt]))
     )
 }

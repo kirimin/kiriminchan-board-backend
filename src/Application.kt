@@ -21,6 +21,7 @@ import io.ktor.util.KtorExperimentalAPI
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
 import site.kirimin_chan.board.api.request.*
@@ -207,8 +208,6 @@ fun Application.module(testing: Boolean = false) {
         }
     }
 }
-
-val DEF_FMT: DateTimeFormatter = DateTimeFormat.mediumDateTime()
 
 @KtorExperimentalAPI
 val Application.envKind

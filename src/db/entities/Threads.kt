@@ -4,8 +4,9 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.jodatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import site.kirimin_chan.board.DEF_FMT
+import site.kirimin_chan.board.entities.Comments
 import site.kirimin_chan.board.model.Thread
+import toFormattedDateTime
 
 object Threads: Table() {
     val threadId: Column<Int> = integer("threadid").autoIncrement()
@@ -32,8 +33,8 @@ object Threads: Table() {
         title = row[title],
         createdUserId = row[createdUserId],
         createdUserName = Users.getUserById(row[createdUserId]).screenName,
-        createdAt = DEF_FMT.print(row[createdAt]),
-        updatedAt = DEF_FMT.print(row[updatedAt]),
+        createdAt = toFormattedDateTime((row[Comments.createdAt])),
+        updatedAt = toFormattedDateTime((row[Comments.updatedAt])),
         comments = emptyList()
     )
 }
