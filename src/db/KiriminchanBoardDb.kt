@@ -1,5 +1,7 @@
 package site.kirimin_chan.board.db
 
+import db.entities.CommentReactions
+import db.entities.Comments
 import db.entities.Threads
 import db.entities.Users
 import io.ktor.application.Application

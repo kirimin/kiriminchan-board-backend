@@ -7,7 +7,6 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import domain.model.User
-import site.kirimin_chan.board.entities.Comments
 import toFormattedDateTime
 import java.lang.NullPointerException
 
@@ -33,8 +32,8 @@ object Users : Table() {
                 isAdmin = it[isAdmin],
                 twitterId = it[twitterId],
                 uid = it[firebaseUid],
-                createdAt = toFormattedDateTime((it[Comments.createdAt])),
-                updatedAt = toFormattedDateTime((it[Comments.updatedAt]))
+                createdAt = toFormattedDateTime((it[createdAt])),
+                updatedAt = toFormattedDateTime((it[updatedAt]))
 
             )
         }.firstOrNull() ?: throw NullPointerException("UserNotFound userId:$id")

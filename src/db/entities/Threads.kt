@@ -4,7 +4,6 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.jodatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import site.kirimin_chan.board.entities.Comments
 import site.kirimin_chan.board.model.Thread
 import toFormattedDateTime
 
@@ -33,8 +32,8 @@ object Threads: Table() {
         title = row[title],
         createdUserId = row[createdUserId],
         createdUserName = Users.getUserById(row[createdUserId]).screenName,
-        createdAt = toFormattedDateTime((row[Comments.createdAt])),
-        updatedAt = toFormattedDateTime((row[Comments.updatedAt])),
+        createdAt = toFormattedDateTime((row[createdAt])),
+        updatedAt = toFormattedDateTime((row[updatedAt])),
         comments = emptyList()
     )
 }

@@ -1,5 +1,6 @@
 package site.kirimin_chan.board
 
+import db.entities.Comments
 import db.entities.Threads
 import db.entities.Users
 import io.ktor.application.Application
@@ -21,13 +22,9 @@ import io.ktor.util.KtorExperimentalAPI
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.format.DateTimeFormatter
 import site.kirimin_chan.board.api.request.*
 import site.kirimin_chan.board.auth.FirebaseAuth
 import site.kirimin_chan.board.db.KiriminchanBoardDb
-import site.kirimin_chan.board.entities.*
 import java.time.Duration
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)

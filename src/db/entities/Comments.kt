@@ -1,6 +1,5 @@
-package site.kirimin_chan.board.entities
+package db.entities
 
-import db.entities.Users
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.jodatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
