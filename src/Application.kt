@@ -1,8 +1,5 @@
 package site.kirimin_chan.board
 
-import db.entities.Comments
-import db.entities.Threads
-import db.entities.Users
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -19,12 +16,12 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.util.KtorExperimentalAPI
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.joda.time.DateTime
 import site.kirimin_chan.board.api.request.*
 import site.kirimin_chan.board.auth.FirebaseAuth
 import site.kirimin_chan.board.db.KiriminchanBoardDb
+import site.kirimin_chan.board.api.request.UsersApi
+import site.kirimin_chan.board.exceptions.TokenCheckException
+import java.lang.Exception
 import java.time.Duration
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
@@ -55,153 +52,96 @@ fun Application.module(testing: Boolean = false) {
 
     routing {
         get("/api/getThreadsSumally") {
-            val response = transaction {
-                Threads.getAllThread().map {
-                    it.comments = Comments.getByThreadId(it.threadId)
-                    it
-                }.filter {
-                    it.comments.isNotEmpty()
-                }
-            }
+            val response = ThreadsApi.getThreadsSumally()
             call.response.status(HttpStatusCode.OK)
             call.respond(response)
         }
 
         get("/api/getThreadDetail/{threadId}") {
-            val params = call.parameters
-            val threadId =
-                params["threadid"]?.toIntOrNull() ?: throw IllegalArgumentException("param threadid must not empty.")
-            val response = transaction {
-                Threads.getByThreadId(threadId).let {
-                    it.comments = Comments.getByThreadId(it.threadId)
-                    it
-                }
+            val response = try {
+                ThreadsApi.getThreadDetail(call.parameters["threadid"])
+            } catch (e: Exception) {
+                e.printStackTrace()
+                call.response.status(HttpStatusCode.BadRequest)
+                return@get
             }
             call.response.status(HttpStatusCode.OK)
             call.respond(response)
         }
 
         post("/api/createNewThread") {
-            val request = call.receive<CreateNewThreadRequest>()
-            if (!FirebaseAuth.checkToken(request.createdUserId, request.token)) {
+            try {
+                ThreadsApi.createNewThread(call.receive())
+            } catch (e: TokenCheckException) {
+                e.printStackTrace()
                 call.response.status(HttpStatusCode.Unauthorized)
                 return@post
-            }
-            transaction {
-                val newThreadId = Threads.insert {
-                    it[createdUserId] = request.createdUserId
-                    it[title] = request.title
-                    it[createdAt] = DateTime()
-                    it[updatedAt] = DateTime()
-                } get Threads.threadId
-                Comments.insert {
-                    it[threadId] = newThreadId
-                    it[createdUserId] = request.createdUserId
-                    it[commentNumber] = 1
-                    it[text] = request.text
-                    it[Threads.createdAt] = DateTime()
-                    it[Threads.updatedAt] = DateTime()
-                }
             }
             call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
         }
 
         post("/api/deleteThread") {
-            val request = call.receive<DeleteThreadRequest>()
-            if (!FirebaseAuth.checkToken(request.userId, request.token)) {
+            try {
+                ThreadsApi.deleteThread(call.receive())
+            } catch (e: TokenCheckException) {
+                e.printStackTrace()
                 call.response.status(HttpStatusCode.Unauthorized)
                 return@post
-            }
-            transaction {
-                Threads.deleteWhere { Threads.threadId eq request.threadId }
-                Comments.deleteWhere { Comments.threadId eq request.threadId }
             }
             call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
         }
 
         post("/api/createNewComment") {
-            val request = call.receive<CreateNewCommentRequest>()
-            if (!FirebaseAuth.checkToken(request.createdUserId, request.token)) {
+            try {
+                CommentsApi.createNewComment(call.receive())
+            } catch (e: TokenCheckException) {
+                e.printStackTrace()
                 call.response.status(HttpStatusCode.Unauthorized)
                 return@post
-            }
-            transaction {
-                Comments.insert {
-                    it[threadId] = request.threadId
-                    it[createdUserId] = request.createdUserId
-                    it[commentNumber] = getLastCommentNumber(request.threadId).commentNumber + 1
-                    it[text] = request.text
-                    it[Threads.createdAt] = DateTime()
-                    it[Threads.updatedAt] = DateTime()
-                }
-                Threads.update(where = { Threads.threadId eq request.threadId }, body = {
-                    it[updatedAt] = DateTime()
-                })
             }
             call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
         }
 
         post("/api/deleteComment") {
-            val request = call.receive<DeleteCommentRequest>()
-            if (!FirebaseAuth.checkToken(request.userId, request.token)) {
+            try {
+                CommentsApi.deleteComment(call.receive())
+            } catch (e: TokenCheckException) {
+                e.printStackTrace()
                 call.response.status(HttpStatusCode.Unauthorized)
                 return@post
-            }
-            transaction {
-                Comments.deleteWhere { Comments.commentId eq request.commentId }
             }
             call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
         }
 
         get("/api/getUser/{uid}") {
-            val params = call.parameters
-            val uid = params["uid"] ?: let {
-                IllegalArgumentException("param uid must not empty.").printStackTrace()
+            val response = try {
+                UsersApi.getUser(call.parameters["uid"])
+            } catch (e: Exception) {
+                e.printStackTrace()
                 call.response.status(HttpStatusCode.BadRequest)
                 return@get
             }
-            val response = transaction {
-                Users.select { Users.firebaseUid eq uid }.map {
-                    Users.getUserById(it[Users.userId])
-                }.first()
-            }
-
             call.response.status(HttpStatusCode.OK)
             call.respond(response)
         }
 
         post("/api/createNewUser") {
-            val request = call.receive<CreateNewUserRequest>()
-            transaction {
-                Users.insert {
-                    it[screenName] = request.name
-                    it[iconUrl] = ""
-                    it[isDeleted] = '0'
-                    it[isAdmin] = '0'
-                    it[twitterId] = ""
-                    it[firebaseUid] = request.firebaseUid
-                    it[createdAt] = DateTime()
-                    it[updatedAt] = DateTime()
-                }
-            }
+            UsersApi.createUser(call.receive())
             call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
         }
 
         post("/api/deleteUser") {
-            val request = call.receive<DeleteUserRequest>()
-            if (!FirebaseAuth.checkToken(request.userId, request.token)) {
+            try {
+                UsersApi.deleteUser(call.receive())
+            } catch (e: TokenCheckException) {
+                e.printStackTrace()
                 call.response.status(HttpStatusCode.Unauthorized)
                 return@post
-            }
-            transaction {
-                Users.update(where = { Users.userId eq request.userId }, body = {
-                    it[isDeleted] = '1'
-                })
             }
             call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))
