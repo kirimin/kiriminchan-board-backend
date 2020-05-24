@@ -136,6 +136,9 @@ fun Application.module(testing: Boolean = false) {
                     it[Threads.createdAt] = DateTime()
                     it[Threads.updatedAt] = DateTime()
                 }
+                Threads.update(where = { Threads.threadId eq request.threadId }, body = {
+                    it[updatedAt] = DateTime()
+                })
             }
             call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("status" to "OK"))

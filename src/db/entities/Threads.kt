@@ -16,7 +16,7 @@ object Threads: Table() {
     override val primaryKey = PrimaryKey(threadId)
 
     fun getAllThread() = transaction {
-        Threads.selectAll().orderBy(threadId to SortOrder.DESC).map {
+        Threads.selectAll().orderBy(updatedAt to SortOrder.DESC).map {
             toModel(it)
         }
     }
